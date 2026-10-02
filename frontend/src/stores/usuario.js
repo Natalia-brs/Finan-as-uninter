@@ -1,5 +1,5 @@
 // frontend/src/stores/usuario.js
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
@@ -14,31 +14,52 @@ function gravarStorage(storage, chave, valor) {
 
 export const useUsuarioStore = defineStore('usuario', () => {
   const nome = ref(lerStorage(localStorage, 'usuarioNome') || '')
+  const token = ref(lerStorage(localStorage, 'usuarioToken') || '')
+  const error = ref(null)
+  const cabecalho = computed(() => ({ Authorization: `Bearer ${token.value}` }))
+
+  function guardarSessao(dados) {
+    nome.value = dados.nome
+    token.value = dados.token
+    gravarStorage(localStorage, 'usuarioNome', dados.nome)
+    gravarStorage(localStorage, 'usuarioToken', dados.token)
+    gravarStorage(sessionStorage, 'acessoRegistrado', '1')
+  }
 
   // Registra o acesso uma vez por sessão do navegador
   async function registrarAcesso() {
-    if (!nome.value || lerStorage(sessionStorage, 'acessoRegistrado')) return
+    if (!token.value || lerStorage(sessionStorage, 'acessoRegistrado')) return
     try {
-      await axios.post(`${API_URL}/acessos`, { nome: nome.value })
+      await axios.post(`${API_URL}/acessos`, {}, { headers: cabecalho.value })
       gravarStorage(sessionStorage, 'acessoRegistrado', '1')
     } catch (err) {
-      console.error('Erro ao registrar acesso:', err)
+      if (err.response?.status === 401) sair()
+      else console.error('Erro ao registrar acesso:', err)
     }
   }
 
-  async function identificar(novoNome) {
-    nome.value = novoNome.trim()
-    gravarStorage(localStorage, 'usuarioNome', nome.value)
-    await registrarAcesso()
+  async function entrar(nomeDigitado, senha, criarConta = false) {
+    error.value = null
+    try {
+      const rota = criarConta ? 'cadastro' : 'login'
+      const { data } = await axios.post(`${API_URL}/${rota}`, { nome: nomeDigitado.trim(), senha })
+      guardarSessao(data)
+      return true
+    } catch (err) {
+      error.value = err.response?.data?.message || 'Falha ao conectar com a API.'
+      return false
+    }
   }
 
   function sair() {
     nome.value = ''
+    token.value = ''
     try {
       localStorage.removeItem('usuarioNome')
+      localStorage.removeItem('usuarioToken')
       sessionStorage.removeItem('acessoRegistrado')
     } catch { /* storage indisponível */ }
   }
 
-  return { nome, identificar, registrarAcesso, sair }
+  return { nome, token, error, cabecalho, entrar, registrarAcesso, sair }
 })

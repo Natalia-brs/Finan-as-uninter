@@ -1,4 +1,3 @@
-// frontend/src/stores/admin.js
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
@@ -10,7 +9,6 @@ function lerSenha() {
 }
 
 export const useAdminStore = defineStore('admin', () => {
-  // A senha fica só na sessão do navegador; fechar a aba encerra o acesso de admin
   const senha = ref(lerSenha())
   const logado = computed(() => !!senha.value)
   const error = ref(null)

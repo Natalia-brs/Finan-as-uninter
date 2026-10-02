@@ -2,7 +2,6 @@
 import { computed, onMounted } from 'vue'
 import { useFeedbacksStore } from '@/stores/feedbacks'
 
-// admin = true mostra os registros de todos os usuários (aba Admin)
 const props = defineProps({ admin: { type: Boolean, default: false } })
 const store = useFeedbacksStore()
 

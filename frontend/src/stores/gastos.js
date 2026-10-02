@@ -12,9 +12,7 @@ export const useGastosStore = defineStore('gastos', () => {
   const gastos = ref([])
   const isLoading = ref(false)
   const isAdding = ref(false)
-  // Erro ao carregar a lista
   const error = ref(null)
-  // Erro ao adicionar/remover (não esconde a lista)
   const erroAcao = ref(null)
 
   // Getter para calcular o total de gastos
@@ -28,7 +26,7 @@ export const useGastosStore = defineStore('gastos', () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await axios.get(`${API_URL}/gastos`, { params: { usuario: usuario.nome } })
+      const response = await axios.get(`${API_URL}/gastos`, { headers: usuario.cabecalho })
       gastos.value = response.data
     } catch (err) {
       error.value = 'Falha ao buscar gastos. Verifique a API.'
@@ -43,7 +41,7 @@ export const useGastosStore = defineStore('gastos', () => {
     isAdding.value = true
     erroAcao.value = null
     try {
-      const response = await axios.post(`${API_URL}/gastos`, { ...gastoData, usuario: usuario.nome })
+      const response = await axios.post(`${API_URL}/gastos`, gastoData, { headers: usuario.cabecalho })
       gastos.value.unshift(response.data)
       return true
     } catch (err) {
@@ -59,7 +57,7 @@ export const useGastosStore = defineStore('gastos', () => {
   async function deleteGasto(id) {
     erroAcao.value = null
     try {
-      await axios.delete(`${API_URL}/gastos/${id}`, { params: { usuario: usuario.nome } })
+      await axios.delete(`${API_URL}/gastos/${id}`, { headers: usuario.cabecalho })
       // Remove o gasto do array local após a exclusão bem-sucedida na API
       gastos.value = gastos.value.filter(gasto => gasto._id !== id)
       return true

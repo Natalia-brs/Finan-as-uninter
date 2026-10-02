@@ -16,7 +16,7 @@ export const useFeedbacksStore = defineStore('feedbacks', () => {
   async function enviarFeedback(dados) {
     error.value = null
     try {
-      await axios.post(`${API_URL}/feedbacks`, dados)
+      await axios.post(`${API_URL}/feedbacks`, dados, { headers: useUsuarioStore().cabecalho })
       return true
     } catch (err) {
       error.value = 'Falha ao enviar feedback.'
@@ -25,7 +25,6 @@ export const useFeedbacksStore = defineStore('feedbacks', () => {
     }
   }
 
-  // Busca feedbacks e acessos: o admin vê os de todos, o usuário só os próprios
   async function fetchRegistros({ admin = false } = {}) {
     feedbacks.value = []
     acessos.value = []
@@ -33,7 +32,7 @@ export const useFeedbacksStore = defineStore('feedbacks', () => {
     error.value = null
     const config = admin
       ? { headers: { 'x-admin-senha': useAdminStore().senha } }
-      : { params: { usuario: useUsuarioStore().nome } }
+      : { headers: useUsuarioStore().cabecalho }
     try {
       const [resFeedbacks, resAcessos] = await Promise.all([
         axios.get(`${API_URL}/feedbacks`, config),

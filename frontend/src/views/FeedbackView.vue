@@ -23,10 +23,7 @@ const handleSubmit = async () => {
   }
 
   enviando.value = true
-  const success = await store.enviarFeedback({
-    ...feedback.value,
-    nome: usuario.nome
-  })
+  const success = await store.enviarFeedback(feedback.value)
   enviando.value = false
 
   if (success) {

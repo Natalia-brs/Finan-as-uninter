@@ -5,11 +5,24 @@ import { useUsuarioStore } from '@/stores/usuario'
 
 const usuario = useUsuarioStore()
 const nomeDigitado = ref('')
+const senhaDigitada = ref('')
+const criarConta = ref(false)
+const enviando = ref(false)
 
 const entrar = async () => {
-  if (!nomeDigitado.value.trim()) return
-  await usuario.identificar(nomeDigitado.value)
-  nomeDigitado.value = ''
+  if (!nomeDigitado.value.trim() || !senhaDigitada.value) return
+  enviando.value = true
+  const ok = await usuario.entrar(nomeDigitado.value, senhaDigitada.value, criarConta.value)
+  enviando.value = false
+  if (ok) {
+    nomeDigitado.value = ''
+    senhaDigitada.value = ''
+  }
+}
+
+const alternarModo = () => {
+  criarConta.value = !criarConta.value
+  usuario.error = null
 }
 
 // Registra o acesso de quem já se identificou antes
@@ -22,7 +35,7 @@ onMounted(() => {
   <div id="app">
     <header class="main-header">
       <h1>💰 Minhas Finanças</h1>
-      <nav v-if="usuario.nome" class="main-nav">
+      <nav v-if="usuario.token" class="main-nav">
         <RouterLink to="/">Gastos</RouterLink>
         <RouterLink to="/feedback">Dar feedback</RouterLink>
         <RouterLink to="/registros">Meus registros</RouterLink>
@@ -32,15 +45,27 @@ onMounted(() => {
       </nav>
     </header>
 
-    <main v-if="!usuario.nome" class="identificacao">
+    <main v-if="!usuario.token" class="identificacao">
       <div class="identificacao-card">
-        <h2>Bem-vindo(a)!</h2>
-        <p>Informe seu nome para começar a usar o sistema.</p>
+        <h2>{{ criarConta ? 'Criar conta' : 'Bem-vindo(a)!' }}</h2>
+        <p>{{ criarConta ? 'Escolha um nome e uma senha para usar o sistema.' : 'Entre com seu nome e senha.' }}</p>
         <form @submit.prevent="entrar">
           <label for="nome-usuario">Seu nome</label>
           <input id="nome-usuario" v-model="nomeDigitado" type="text" maxlength="80" required autofocus>
-          <button type="submit">Entrar</button>
+          <label for="senha-usuario">Senha</label>
+          <input id="senha-usuario" v-model="senhaDigitada" type="password" minlength="4" required
+            :autocomplete="criarConta ? 'new-password' : 'current-password'">
+          <p v-if="usuario.error" class="erro-login">{{ usuario.error }}</p>
+          <button type="submit" :disabled="enviando">
+            {{ enviando ? 'Aguarde...' : (criarConta ? 'Criar conta' : 'Entrar') }}
+          </button>
         </form>
+        <p class="alternar-modo">
+          {{ criarConta ? 'Já tem conta?' : 'Primeira vez aqui?' }}
+          <button type="button" class="link" @click="alternarModo">
+            {{ criarConta ? 'Entrar' : 'Criar conta' }}
+          </button>
+        </p>
       </div>
     </main>
 
@@ -139,6 +164,15 @@ body {
   box-sizing: border-box;
   margin-bottom: 15px;
 }
+.erro-login { color: #c0392b; font-weight: bold; margin: 0 0 15px; }
+.alternar-modo { margin: 15px 0 0; font-size: 0.9em; color: #555; }
+.identificacao-card .alternar-modo .link {
+  background: none;
+  color: #42b883;
+  padding: 0;
+  text-decoration: underline;
+}
+.identificacao-card button:disabled { background: #a5a5a5; cursor: not-allowed; }
 .identificacao-card button {
   background: #42b883;
   color: white;
