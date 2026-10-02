@@ -47,10 +47,10 @@ onMounted(() => {
   store.fetchGastos()
 })
 
-// Função para formatar a data (Ajustada para o formato dd/mm/yyyy)
+// Função para formatar a data e o horário (formato dd/mm/yyyy hh:mm)
 function formatDate(dateString) {
-  const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-  return new Date(dateString).toLocaleDateString('pt-BR', options);
+  const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+  return new Date(dateString).toLocaleString('pt-BR', options);
 }
 </script>
 

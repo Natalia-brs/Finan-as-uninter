@@ -2,6 +2,8 @@
 import { computed, onMounted } from 'vue'
 import { useFeedbacksStore } from '@/stores/feedbacks'
 
+// admin = true mostra os registros de todos os usuários (aba Admin)
+const props = defineProps({ admin: { type: Boolean, default: false } })
 const store = useFeedbacksStore()
 
 const mediaNotas = computed(() => {
@@ -13,7 +15,7 @@ const mediaNotas = computed(() => {
 const usuariosUnicos = computed(() => new Set(store.acessos.map(a => a.nome.toLowerCase())).size)
 
 onMounted(() => {
-  store.fetchRegistros()
+  store.fetchRegistros({ admin: props.admin })
 })
 
 function formatDateTime(dateString) {
@@ -26,7 +28,7 @@ function formatDateTime(dateString) {
 
 <template>
   <div class="container">
-    <h1>Registros de Uso</h1>
+    <h1>{{ admin ? 'Registros de Uso (todos os usuários)' : 'Meus Registros' }}</h1>
 
     <p v-if="store.isLoading">Carregando registros...</p>
     <p v-else-if="store.error" class="error-message">Erro: {{ store.error }}</p>
@@ -37,7 +39,7 @@ function formatDateTime(dateString) {
           <span class="resumo-valor">{{ store.acessos.length }}</span>
           <span>Acessos</span>
         </div>
-        <div class="card resumo-card">
+        <div v-if="admin" class="card resumo-card">
           <span class="resumo-valor">{{ usuariosUnicos }}</span>
           <span>Usuários</span>
         </div>

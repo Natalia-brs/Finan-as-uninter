@@ -33,6 +33,7 @@ services:
     environment:
       MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/${MONGO_DATABASE}?authSource=admin
       PORT: 5000
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules

@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const Gasto = require('./models/Gasto'); 
 const Acesso = require('./models/Acesso');
 const Feedback = require('./models/Feedback');
@@ -32,6 +33,31 @@ mongoose.connect(MONGO_URI)
 function usuarioDaRequisicao(req) {
     const usuario = req.query.usuario || req.body?.usuario;
     return typeof usuario === 'string' ? usuario.trim().toLowerCase() : '';
+}
+
+// Admin: identificado pela senha ADMIN_PASSWORD enviada no cabeçalho x-admin-senha
+function ehAdmin(req) {
+    const senha = process.env.ADMIN_PASSWORD;
+    const enviada = req.get('x-admin-senha');
+    if (!senha || !enviada) return false;
+    const a = Buffer.from(senha);
+    const b = Buffer.from(enviada);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Admin vê todos os registros; usuário comum só os próprios (nome sem diferenciar maiúsculas)
+async function listarRegistros(req, res, Model, campoData) {
+    const admin = ehAdmin(req);
+    const usuario = usuarioDaRequisicao(req);
+    if (!admin && !usuario) {
+        res.status(400).json({ message: 'Informe o usuário.' });
+        return null;
+    }
+    const filtro = admin ? {} : { nome: usuario };
+    return Model.find(filtro)
+        .collation({ locale: 'pt', strength: 2 })
+        .select('-dispositivo')
+        .sort({ [campoData]: -1 });
 }
 
 // ROTAS DA API DE GASTOS
@@ -87,11 +113,19 @@ app.delete('/api/gastos/:id', async (req, res) => {
 
 // ROTAS DE ACESSOS (nome, data e horário de quem usou o sistema)
 
+// Confere a senha do admin
+app.get('/api/admin', (req, res) => {
+    if (!ehAdmin(req)) {
+        return res.status(401).json({ message: 'Senha de admin inválida.' });
+    }
+    res.json({ admin: true });
+});
+
 app.get('/api/acessos', async (req, res) => {
     try {
         // O dispositivo (user-agent) fica só no banco, não é exposto na listagem
-        const acessos = await Acesso.find().select('-dispositivo').sort({ dataHora: -1 });
-        res.json(acessos);
+        const acessos = await listarRegistros(req, res, Acesso, 'dataHora');
+        if (acessos) res.json(acessos);
     } catch (err) {
         res.status(500).json({ message: 'Erro ao buscar acessos', error: err.message });
     }
@@ -115,8 +149,8 @@ app.post('/api/acessos', async (req, res) => {
 
 app.get('/api/feedbacks', async (req, res) => {
     try {
-        const feedbacks = await Feedback.find().sort({ data: -1 });
-        res.json(feedbacks);
+        const feedbacks = await listarRegistros(req, res, Feedback, 'data');
+        if (feedbacks) res.json(feedbacks);
     } catch (err) {
         res.status(500).json({ message: 'Erro ao buscar feedbacks', error: err.message });
     }

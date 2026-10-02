@@ -25,7 +25,8 @@ onMounted(() => {
       <nav v-if="usuario.nome" class="main-nav">
         <RouterLink to="/">Gastos</RouterLink>
         <RouterLink to="/feedback">Dar feedback</RouterLink>
-        <RouterLink to="/registros">Registros</RouterLink>
+        <RouterLink to="/registros">Meus registros</RouterLink>
+        <RouterLink to="/admin">Admin</RouterLink>
         <span class="usuario-nome">Olá, {{ usuario.nome }}</span>
         <button class="btn-sair" @click="usuario.sair()">Sair</button>
       </nav>
