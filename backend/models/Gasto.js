@@ -1,7 +1,9 @@
 // backend/models/Gasto.js
 const mongoose = require('mongoose');
+const { randomUUID } = require('crypto');
 
 const GastoSchema = new mongoose.Schema({
+    _id: { type: String, default: () => randomUUID() },
     usuario: {
         type: String,
         required: [true, 'O usuário é obrigatório'],

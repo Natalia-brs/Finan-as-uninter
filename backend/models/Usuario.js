@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
+const { randomUUID } = require('crypto');
 
 const UsuarioSchema = new mongoose.Schema({
+    _id: { type: String, default: () => randomUUID() },
     login: {
         type: String,
         required: true,

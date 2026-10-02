@@ -145,7 +145,7 @@ app.post('/api/gastos', exigirLogin, async (req, res) => {
 
 // DELETE (Remover por ID, apenas gastos do próprio usuário)
 app.delete('/api/gastos/:id', exigirLogin, async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id)) {
         return res.status(400).json({ message: 'ID de gasto inválido.' });
     }
     try {

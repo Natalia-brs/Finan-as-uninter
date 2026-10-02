@@ -1,7 +1,9 @@
 // backend/models/Acesso.js
 const mongoose = require('mongoose');
+const { randomUUID } = require('crypto');
 
 const AcessoSchema = new mongoose.Schema({
+    _id: { type: String, default: () => randomUUID() },
     nome: {
         type: String,
         required: [true, 'O nome é obrigatório'],
