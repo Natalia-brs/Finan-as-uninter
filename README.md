@@ -32,7 +32,7 @@ docker compose up --build
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET/POST | `/api/gastos` | Lista e cadastra gastos |
-| DELETE | `/api/gastos/:id` | Remove um gasto |
+| GET/POST | `/api/gastos?usuario=nome` | Lista e cadastra os gastos do usuário |
+| DELETE | `/api/gastos/:id?usuario=nome` | Remove um gasto do usuário |
 | GET/POST | `/api/acessos` | Lista e registra acessos |
 | GET/POST | `/api/feedbacks` | Lista e registra feedbacks |

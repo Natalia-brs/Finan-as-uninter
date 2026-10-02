@@ -83,8 +83,10 @@ function formatDate(dateString) {
           </select>
         </div>
         
-        <button type="submit" class="btn-primary" :disabled="store.isLoading">
-            {{ store.isLoading ? 'Adicionando...' : 'Adicionar Gasto' }}
+        <p v-if="store.erroAcao" class="error-message">Erro: {{ store.erroAcao }}</p>
+
+        <button type="submit" class="btn-primary" :disabled="store.isAdding">
+            {{ store.isAdding ? 'Adicionando...' : 'Adicionar Gasto' }}
         </button>
       </form>
     </div>
@@ -232,4 +234,4 @@ li {
 }
 
 .error-message { color: #c0392b; font-weight: bold; padding: 10px; background: #fbecec; border: 1px solid #c0392b; border-radius: 4px; }
-</style>d
+</style>

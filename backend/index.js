@@ -14,8 +14,7 @@ const PORT = process.env.PORT || 5000;
 // Configura CORS
 app.use(cors({
     origin: '*', 
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE'
 }));
 app.use(express.json());
 
@@ -24,14 +23,27 @@ const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ MongoDB conectado com sucesso!'))
-    .catch(err => console.error('❌ Erro de conexão com MongoDB:', err.message));
+    .catch(err => {
+        console.error('❌ Erro de conexão com MongoDB:', err.message);
+        process.exit(1);
+    });
+
+// Os gastos são separados pelo nome do usuário (sem diferenciar maiúsculas)
+function usuarioDaRequisicao(req) {
+    const usuario = req.query.usuario || req.body?.usuario;
+    return typeof usuario === 'string' ? usuario.trim().toLowerCase() : '';
+}
 
 // ROTAS DA API DE GASTOS
 
-// GET (Buscar todos)
+// GET (Buscar os gastos do usuário)
 app.get('/api/gastos', async (req, res) => {
+    const usuario = usuarioDaRequisicao(req);
+    if (!usuario) {
+        return res.status(400).json({ message: 'Informe o usuário.' });
+    }
     try {
-        const gastos = await Gasto.find().sort({ data: -1 }); 
+        const gastos = await Gasto.find({ usuario }).sort({ data: -1 });
         res.json(gastos);
     } catch (err) {
         res.status(500).json({ message: 'Erro ao buscar gastos', error: err.message });
@@ -41,7 +53,8 @@ app.get('/api/gastos', async (req, res) => {
 // POST (Criar novo)
 app.post('/api/gastos', async (req, res) => {
     try {
-        const novoGasto = new Gasto(req.body);
+        const { descricao, valor, categoria } = req.body;
+        const novoGasto = new Gasto({ descricao, valor, categoria, usuario: usuarioDaRequisicao(req) });
         const gastoSalvo = await novoGasto.save();
         res.status(201).json(gastoSalvo);
     } catch (err) {
@@ -49,10 +62,16 @@ app.post('/api/gastos', async (req, res) => {
     }
 });
 
-// DELETE (Remover por ID) - ROTA NOVO
+// DELETE (Remover por ID, apenas gastos do próprio usuário)
 app.delete('/api/gastos/:id', async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ message: 'ID de gasto inválido.' });
+    }
     try {
-        const result = await Gasto.findByIdAndDelete(req.params.id);
+        const result = await Gasto.findOneAndDelete({
+            _id: req.params.id,
+            usuario: usuarioDaRequisicao(req)
+        });
         
         if (!result) {
             return res.status(404).json({ message: 'Gasto não encontrado.' });
@@ -70,7 +89,8 @@ app.delete('/api/gastos/:id', async (req, res) => {
 
 app.get('/api/acessos', async (req, res) => {
     try {
-        const acessos = await Acesso.find().sort({ dataHora: -1 });
+        // O dispositivo (user-agent) fica só no banco, não é exposto na listagem
+        const acessos = await Acesso.find().select('-dispositivo').sort({ dataHora: -1 });
         res.json(acessos);
     } catch (err) {
         res.status(500).json({ message: 'Erro ao buscar acessos', error: err.message });

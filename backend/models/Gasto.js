@@ -2,6 +2,14 @@
 const mongoose = require('mongoose');
 
 const GastoSchema = new mongoose.Schema({
+    usuario: {
+        type: String,
+        required: [true, 'O usuário é obrigatório'],
+        trim: true,
+        lowercase: true,
+        maxlength: 80,
+        index: true
+    },
     descricao: {
         type: String,
         required: [true, 'A descrição é obrigatória'],
