@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const Gasto = require('./models/Gasto'); 
 const Acesso = require('./models/Acesso');
 const Feedback = require('./models/Feedback');
@@ -110,6 +111,13 @@ app.post('/api/feedbacks', async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: 'Erro ao registrar feedback', error: err.message });
     }
+});
+
+// Em produção, o backend também serve o frontend compilado
+const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(FRONTEND_DIST));
+app.get(/^\/(?!api\/).*/, (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
 });
 
 app.listen(PORT, () => {
